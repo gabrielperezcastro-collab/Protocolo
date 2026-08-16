@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Protocolo</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Protocolo">
+<meta name="theme-color" content="#10131C">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%2310131C'/%3E%3Ccircle cx='90' cy='90' r='46' fill='none' stroke='%23E0A458' stroke-width='7'/%3E%3Cpath d='M90 60 v30 l20 14' stroke='%23E0A458' stroke-width='7' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#10131C; --raised:#191E2B; --raised2:#212739; --line:#2C3346;
+  --bone:#E9E5DC; --dim:#8A93A8; --dimmer:#5D6579;
+  --amber:#E0A458; --amber-d:#3A2C1B;
+  --teal:#5FA294; --teal-d:#1D2E2C;
+  --rose:#C97064; --rose-d:#33211F;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--night); color:var(--bone);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-size:15px; line-height:1.5;
+  padding-bottom:calc(84px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{margin:0;font-weight:600}
+button{font-family:inherit;font-size:inherit;color:inherit;border:none;background:none;cursor:pointer}
+input,select{font-family:inherit;font-size:16px;color:var(--bone)}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.serif{font-family:'Instrument Serif',Georgia,serif;font-weight:400}
+.wrap{max-width:640px;margin:0 auto;padding:0 18px}
+.hide{display:none !important}
+
+/* ---------- lock ---------- */
+#lock{position:fixed;inset:0;background:var(--night);z-index:200;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+#lock .ring{width:66px;height:66px;border-radius:50%;border:2px solid var(--amber);
+  display:flex;align-items:center;justify-content:center;margin-bottom:26px}
+#lock .ring svg{width:30px;height:30px;stroke:var(--amber);fill:none;stroke-width:2.2;stroke-linecap:round}
+#lock h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:34px;letter-spacing:-.01em;margin-bottom:6px}
+#lock p{color:var(--dim);font-size:14px;margin:0 0 30px;max-width:300px}
+.pin{display:flex;gap:10px;margin-bottom:22px}
+.pin i{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--dimmer);transition:.15s}
+.pin i.on{background:var(--amber);border-color:var(--amber)}
+.pad{display:grid;grid-template-columns:repeat(3,74px);gap:13px}
+.pad button{height:74px;border-radius:50%;background:var(--raised);font-size:24px;
+  font-family:'JetBrains Mono',monospace;transition:.1s}
+.pad button:active{background:var(--raised2);transform:scale(.94)}
+.pad button.blank{background:none}
+.bio{margin-top:26px;color:var(--amber);font-size:14px;font-weight:500;
+  border:1px solid var(--amber-d);padding:11px 22px;border-radius:999px}
+.lockmsg{color:var(--rose);font-size:13px;height:18px;margin-top:14px}
+
+/* ---------- header ---------- */
+header{padding:calc(env(safe-area-inset-top) + 22px) 0 8px}
+.eyebrow{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer);font-weight:600}
+.datebar{display:flex;align-items:baseline;justify-content:space-between;margin-top:5px}
+.datebar h1{font-family:'Instrument Serif',serif;font-weight:400;font-size:29px;letter-spacing:-.01em}
+.phasepill{font-size:11px;font-weight:600;color:var(--amber);background:var(--amber-d);
+  padding:4px 11px;border-radius:999px;white-space:nowrap}
+.daynav{display:flex;gap:8px;align-items:center;margin-top:12px}
+.daynav button{width:32px;height:32px;border-radius:9px;background:var(--raised);color:var(--dim);font-size:15px}
+.daynav span{font-size:12.5px;color:var(--dim);flex:1}
+
+/* ---------- signature: keystone card ---------- */
+.keystone{margin:20px 0 0;border-radius:20px;overflow:hidden;
+  background:linear-gradient(160deg,#1E2436,#161B28);border:1px solid var(--line)}
+.keystone.done{background:linear-gradient(160deg,#1D2E2C,#16211F);border-color:#2E4A45}
+.ks-top{padding:20px 20px 16px}
+.ks-label{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);font-weight:600}
+.keystone.done .ks-label{color:var(--teal)}
+.ks-q{font-family:'Instrument Serif',serif;font-size:25px;line-height:1.2;margin:9px 0 3px;letter-spacing:-.01em}
+.ks-sub{font-size:12.5px;color:var(--dim);margin:0}
+.ks-btns{display:flex;gap:9px;padding:0 20px 18px;margin-top:16px}
+.ks-btns button{flex:1;padding:14px;border-radius:12px;font-weight:600;font-size:14.5px;
+  background:var(--raised2);color:var(--dim);border:1px solid transparent;transition:.15s}
+.ks-btns button.sel-y{background:var(--teal);color:#0E1614;border-color:var(--teal)}
+.ks-btns button.sel-n{background:var(--rose-d);color:var(--rose);border-color:#4A2C28}
+.ribbon{display:flex;gap:5px;padding:0 20px 18px}
+.ribbon .n{flex:1;height:34px;border-radius:8px;background:var(--raised2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.ribbon .n b{font-size:9px;font-weight:600;color:var(--dimmer);font-family:'JetBrains Mono',monospace}
+.ribbon .n.y{background:var(--teal);}
+.ribbon .n.y b{color:#0E1614}
+.ribbon .n.no{background:var(--rose-d)}
+.ribbon .n.no b{color:var(--rose)}
+.ribbon .n.today{outline:1.5px solid var(--amber);outline-offset:1px}
+.streak{padding:0 20px 18px;font-size:12.5px;color:var(--dim)}
+.streak b{color:var(--bone);font-family:'JetBrains Mono',monospace}
+
+/* ---------- sections & rows ---------- */
+.sec{margin-top:26px}
+.sec>h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dimmer);
+  font-weight:600;margin-bottom:9px;padding-left:2px}
+.card{background:var(--raised);border-radius:var(--r);border:1px solid var(--line);overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:13px 15px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.row .lab{flex:1;min-width:0}
+.row .lab .t{font-size:14.5px}
+.row .lab .h{font-size:11.5px;color:var(--dimmer);margin-top:2px}
+.chk{width:27px;height:27px;border-radius:9px;border:1.5px solid var(--dimmer);flex:none;
+  display:flex;align-items:center;justify-content:center;transition:.15s}
+.chk.on{background:var(--teal);border-color:var(--teal)}
+.chk svg{width:14px;height:14px;stroke:#0E1614;stroke-width:3;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.chk.on svg{opacity:1}
+.num{width:88px;flex:none}
+.num input{width:100%;background:var(--raised2);border:1px solid var(--line);border-radius:9px;
+  padding:9px 10px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:14px;outline:none}
+.num input:focus{border-color:var(--amber)}
+.seg{display:flex;gap:5px;flex:none}
+.seg button{padding:8px 12px;border-radius:9px;background:var(--raised2);color:var(--dim);
+  font-size:13px;font-weight:500;min-width:42px}
+.seg button.on{background:var(--bone);color:#12161F;font-weight:600}
+.seg button.on.warn{background:var(--rose);color:#1A0F0E}
+.seg button.on.good{background:var(--teal);color:#0E1614}
+
+/* ---------- charts ---------- */
+.chart{background:var(--raised);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px 10px}
+.chart h3{font-size:13.5px;margin-bottom:2px}
+.chart .cap{font-size:11.5px;color:var(--dimmer);margin-bottom:12px}
+.chart svg{width:100%;height:145px;display:block;overflow:visible}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--raised);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.stat .k{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--dimmer);font-weight:600}
+.stat .v{font-family:'JetBrains Mono',monospace;font-size:25px;margin-top:5px;letter-spacing:-.02em}
+.stat .d{font-size:11.5px;color:var(--dim);margin-top:1px}
+.stat .v.teal{color:var(--teal)} .stat .v.amber{color:var(--amber)} .stat .v.rose{color:var(--rose)}
+
+/* ---------- plan / prose ---------- */
+.phase{background:var(--raised);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px;margin-bottom:11px}
+.phase.now{border-color:var(--amber);background:linear-gradient(160deg,#1E2436,#171C29)}
+.phase .ph{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.phase h3{font-family:'Instrument Serif',serif;font-weight:400;font-size:21px}
+.phase .dt{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);white-space:nowrap}
+.phase p{font-size:13.5px;color:var(--dim);margin:8px 0 0}
+.phase .crit{font-size:12px;color:var(--amber);margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+.acc{background:var(--raised);border:1px solid var(--line);border-radius:var(--r);margin-bottom:9px;overflow:hidden}
+.acc>button{width:100%;text-align:left;padding:15px;display:flex;justify-content:space-between;
+  align-items:center;gap:10px;font-weight:500;font-size:14.5px}
+.acc>button span.ar{color:var(--dimmer);transition:.2s;flex:none}
+.acc.open>button span.ar{transform:rotate(90deg)}
+.acc .in{padding:0 15px 15px;font-size:13.5px;color:var(--dim);line-height:1.62}
+.acc .in b{color:var(--bone);font-weight:600}
+.acc .in ul{margin:9px 0;padding-left:17px} .acc .in li{margin-bottom:6px}
+
+/* ---------- settings ---------- */
+.btn{display:block;width:100%;padding:14px;border-radius:12px;background:var(--raised2);
+  border:1px solid var(--line);font-weight:600;font-size:14.5px;text-align:center;margin-bottom:9px}
+.btn.pri{background:var(--amber);color:#1A1206;border-color:var(--amber)}
+.btn.dgr{color:var(--rose)}
+.fld{margin-bottom:14px}
+.fld label{display:block;font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--dimmer);font-weight:600;margin-bottom:6px}
+.fld input{width:100%;background:var(--raised);border:1px solid var(--line);border-radius:10px;
+  padding:12px;outline:none;font-size:14px}
+.fld input:focus{border-color:var(--amber)}
+.note{font-size:12.5px;color:var(--dimmer);line-height:1.6;margin:10px 0 20px}
+.syncbar{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--dim);
+  padding:11px 14px;background:var(--raised);border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--dimmer);flex:none}
+.dot.ok{background:var(--teal)} .dot.err{background:var(--rose)} .dot.busy{background:var(--amber)}
+
+/* ---------- tabbar ---------- */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:rgba(16,19,28,.93);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav .inner{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+nav button{padding:11px 0 9px;display:flex;flex-direction:column;align-items:center;gap:4px;
+  color:var(--dimmer);font-size:10.5px;font-weight:500}
+nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--amber)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(94px + env(safe-area-inset-bottom));
+  background:var(--raised2);border:1px solid var(--line);padding:11px 18px;border-radius:999px;
+  font-size:13px;z-index:150;opacity:0;transition:.25s;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1}
+@media(prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOCK ===================== -->
+<div id="lock">
+  <div class="ring"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg></div>
+  <h1 id="lockTitle">Protocolo</h1>
+  <p id="lockSub">Ingresá tu PIN de 4 dígitos</p>
+  <div class="pin" id="pinDots"><i></i><i></i><i></i><i></i></div>
+  <div class="pad" id="pad"></div>
+  <button class="bio hide" id="bioBtn">Usar Face ID / Touch ID</button>
+  <div class="lockmsg" id="lockMsg"></div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app" class="hide">
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="hEyebrow">Hoy</div>
+    <div class="datebar">
+      <h1 id="hDate">—</h1>
+      <span class="phasepill" id="hPhase">—</span>
+    </div>
+    <div class="daynav">
+      <button id="dPrev" aria-label="Día anterior">‹</button>
+      <button id="dNext" aria-label="Día siguiente">›</button>
+      <span id="dRel"></span>
+    </div>
+  </header>
+</div>
+
+<!-- ---------- TAB: HOY ---------- -->
+<section id="tab-hoy" class="wrap">
+  <div class="keystone" id="keystone">
+    <div class="ks-top">
+      <div class="ks-label" id="ksLabel">La regla innegociable</div>
+      <div class="ks-q serif">¿El teléfono durmió fuera del cuarto?</div>
+      <p class="ks-sub">Cargador en el vestidor. Alarma de cierre a las 22:15.</p>
+    </div>
+    <div class="ks-btns">
+      <button data-ks="1" id="ksY">Sí, afuera</button>
+      <button data-ks="0" id="ksN">No</button>
+    </div>
+    <div class="ribbon" id="ribbon"></div>
+    <div class="streak" id="streak"></div>
+  </div>
+
+  <div class="sec">
+    <h2>Sueño</h2>
+    <div class="card" id="grpSueno"></div>
+  </div>
+  <div class="sec">
+    <h2>Movimiento</h2>
+    <div class="card" id="grpMov"></div>
+  </div>
+  <div class="sec">
+    <h2>Alimentación</h2>
+    <div class="card" id="grpAlim"></div>
+  </div>
+  <div class="sec">
+    <h2>Señales</h2>
+    <div class="card" id="grpSen"></div>
+  </div>
+  <div class="sec" id="secSemanal">
+    <h2>Registro semanal · domingo</h2>
+    <div class="card" id="grpSem"></div>
+  </div>
+  <div style="height:14px"></div>
+</section>
+
+<!-- ---------- TAB: PROGRESO ---------- -->
+<section id="tab-prog" class="wrap hide">
+  <div class="stats" id="statGrid"></div>
+  <div class="chart" style="margin-bottom:12px">
+    <h3>Peso y media móvil de 4 semanas</h3>
+    <div class="cap">Leé la línea, no el punto. La media es lo que importa.</div>
+    <svg id="chWeight" viewBox="0 0 320 145" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="chart" style="margin-bottom:12px">
+    <h3>Horas de sueño · últimos 30 días</h3>
+    <div class="cap">Objetivo progresivo: 6,5 h → 7,5 h</div>
+    <svg id="chSleep" viewBox="0 0 320 145" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="chart" style="margin-bottom:12px">
+    <h3>Cintura y cuello</h3>
+    <div class="cap">La cintura sigue bajando cuando el peso se estanca</div>
+    <svg id="chWaist" viewBox="0 0 320 145" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="chart">
+    <h3>Cumplimiento semanal</h3>
+    <div class="cap">El plan funciona con 70–80%. No hace falta más.</div>
+    <svg id="chAdh" viewBox="0 0 320 145" preserveAspectRatio="none"></svg>
+  </div>
+  <div style="height:14px"></div>
+</section>
+
+<!-- ---------- TAB: PLAN ---------- -->
+<section id="tab-plan" class="wrap hide">
+  <div class="sec" style="margin-top:16px">
+    <h2>Fases</h2>
+    <div id="phaseList"></div>
+  </div>
+  <div class="sec">
+    <h2>Protocolos</h2>
+    <div id="protoList"></div>
+  </div>
+  <div style="height:14px"></div>
+</section>
+
+<!-- ---------- TAB: AJUSTES ---------- -->
+<section id="tab-set" class="wrap hide">
+  <div class="sec" style="margin-top:16px">
+    <h2>Sincronización</h2>
+    <div class="syncbar"><span class="dot" id="syncDot"></span><span id="syncTxt">Sin conectar</span></div>
+    <div class="fld">
+      <label>Google Client ID</label>
+      <input id="cidInput" placeholder="…apps.googleusercontent.com" autocapitalize="off" autocorrect="off" spellcheck="false">
+    </div>
+    <button class="btn pri" id="btnConnect">Conectar Google Drive</button>
+    <button class="btn" id="btnPush">Guardar en Drive ahora</button>
+    <button class="btn" id="btnPull">Traer datos de Drive</button>
+    <p class="note">Los datos van a una carpeta oculta y privada de esta app en tu Drive
+      (<span class="mono">appDataFolder</span>). No se mezclan con tus archivos y ninguna otra
+      aplicación puede leerlos. El paso a paso para generar el Client ID está en el Anexo C del PDF.</p>
+  </div>
+  <div class="sec">
+    <h2>Seguridad</h2>
+    <button class="btn" id="btnBio">Activar Face ID / Touch ID</button>
+    <button class="btn" id="btnPin">Cambiar PIN</button>
+    <p class="note">El PIN se guarda como hash con salt en este dispositivo, nunca en texto plano
+      ni en Drive. Face ID usa WebAuthn con clave del dispositivo: el dato biométrico nunca sale
+      del hardware de Apple.</p>
+  </div>
+  <div class="sec">
+    <h2>Datos</h2>
+    <button class="btn" id="btnExport">Exportar respaldo (JSON)</button>
+    <button class="btn" id="btnImport">Importar respaldo</button>
+    <input type="file" id="fileIn" accept="application/json" class="hide">
+    <button class="btn dgr" id="btnWipe">Borrar todo de este dispositivo</button>
+  </div>
+  <div class="sec">
+    <h2>Instalar</h2>
+    <p class="note"><b>iPhone / iPad:</b> abrila en Safari → botón Compartir → Agregar a pantalla de inicio.<br>
+      <b>Mac:</b> abrila en Safari → menú Archivo → Agregar al Dock.<br>
+      Una vez instalada abre a pantalla completa y funciona sin conexión.</p>
+  </div>
+  <div style="height:14px"></div>
+</section>
+
+<nav><div class="inner">
+  <button data-tab="hoy" class="on"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/></svg>Hoy</button>
+  <button data-tab="prog"><svg viewBox="0 0 24 24"><path d="M3 18l5-6 4 3 5-8 4 5"/></svg>Progreso</button>
+  <button data-tab="plan"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 10h8M8 14h5"/></svg>Plan</button>
+  <button data-tab="set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></svg>Ajustes</button>
+</div></nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+"use strict";
+/* ============================ storage ============================ */
+const MEM = {};
+let db = null;
+function openDB(){
+  return new Promise(res=>{
+    if(!self.indexedDB) return res(null);
+    const r = indexedDB.open('protocolo', 1);
+    r.onupgradeneeded = e => { const d = e.target.result;
+      if(!d.objectStoreNames.contains('kv')) d.createObjectStore('kv'); };
+    r.onsuccess = e => res(e.target.result);
+    r.onerror = () => res(null);
+  });
+}
+async function kvGet(k){
+  if(!db) return MEM[k] ?? null;
+  return new Promise(res=>{ const t=db.transaction('kv','readonly').objectStore('kv').get(k);
+    t.onsuccess=()=>res(t.result ?? null); t.onerror=()=>res(null); });
+}
+async function kvSet(k,v){
+  MEM[k]=v;
+  if(!db) return;
+  return new Promise(res=>{ const t=db.transaction('kv','readwrite').objectStore('kv').put(v,k);
+    t.onsuccess=()=>res(); t.onerror=()=>res(); });
+}
+
+/* ============================ state ============================ */
+const START = '2026-08-16';
+let S = { days:{}, cfg:{}, sec:{} };
+let cur = todayISO();
+
+function todayISO(){ const d=new Date(); return iso(d); }
+function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parse(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function shift(s,n){ const d=parse(s); d.setDate(d.getDate()+n); return iso(d); }
+function dayOf(s){ return parse(s).getDay(); }
+function fmtLong(s){
+  const D=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  const M=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const d=parse(s); return D[d.getDay()]+' '+d.getDate()+' de '+M[d.getMonth()];
+}
+function D(k){ if(!S.days[k]) S.days[k]={}; return S.days[k]; }
+
+/* ============================ plan model ============================ */
+const PHASES = [
+  {n:'Fase 0 · Cimientos', a:'2026-08-16', b:'2026-08-30', short:'Fase 0',
+   d:'Solo sueño y logística. Sin gimnasio y sin cambios de dieta. Teléfono fuera del cuarto, terapia posicional, compras, consulta psiquiátrica, rehabilitación de gemelo. El tenis sigue igual.',
+   c:'Pasaje: ≥ 10 de 14 noches con el teléfono afuera y ≥ 6,5 h de sueño promedio.'},
+  {n:'Fase 1 · Reacondicionamiento', a:'2026-08-31', b:'2026-09-27', short:'Fase 1',
+   d:'Se suma fuerza básica (2 sesiones por semana) y la reestructuración aditiva de la alimentación. Cargas deliberadamente conservadoras. Entrenador personal recomendado.',
+   c:'Pasaje: ≥ 6 de 8 sesiones cumplidas, sin dolor de gemelo, sueño sostenido ≥ 6,5 h.'},
+  {n:'Fase 2 · Construcción', a:'2026-09-28', b:'2026-11-22', short:'Fase 2',
+   d:'Tres sesiones semanales con división tren superior / inferior, progresión de carga real y cardio en zona 2. La semana del cierre de octubre se ejecuta en modo mantenimiento.',
+   c:'Pasaje: progresión de carga documentada, cintura en descenso, evaluación cardiológica hecha.'},
+  {n:'Fase 3 · Consolidación', a:'2026-11-23', b:'2027-01-31', short:'Fase 3',
+   d:'Autonomía. El plan deja de ser un programa y pasa a ser tu forma de vivir. Incluye el cierre de diciembre y las vacaciones de febrero como pruebas de resistencia del sistema.',
+   c:'Pasaje: mantener los hábitos sin estructura externa durante ≥ 3 semanas seguidas.'}
+];
+function phaseOf(s){
+  for(const p of PHASES) if(s>=p.a && s<=p.b) return p;
+  return s < START ? null : PHASES[3];
+}
+
+const PROTOS = [
+{t:'Rutina de descenso · los 45 minutos previos', h:`
+<b>22:15 — Alarma de cierre digital.</b> El teléfono va al cargador en el vestidor. No hay "último mensaje".
+<ul>
+<li><b>22:15–22:30</b> · Ducha tibia, lavado nasal con solución salina, tira nasal, magnesio y clonazepam según indicación.</li>
+<li><b>22:30–22:45</b> · Preparar el día siguiente: ropa de entrenamiento a la vista, vianda en la heladera, botella de agua en la mesa de luz. La fricción de la mañana se elimina la noche anterior.</li>
+<li><b>22:45–23:00</b> · Cama. Audiolibro o podcast tranquilo en el parlante, temporizador de 30 minutos. Sin pantalla.</li>
+<li><b>23:00</b> · Luz apagada. Costado derecho con almohada corporal.</li>
+</ul>`},
+{t:'Terapia posicional · de 18,2 a 2,9 eventos por hora', h:`
+Tu polisomnografía de 2021 muestra <b>18,2 eventos por hora boca arriba</b> (rango moderado) contra
+<b>2,9 de costado derecho</b> (rango normal). La mayor parte de tu apnea se resuelve con la posición.
+<ul>
+<li><b>Primera línea:</b> almohada corporal abrazada, con una pierna encima. Impide el giro a supino y alinea la lumbar.</li>
+<li><b>Segunda línea:</b> pelota de tenis cosida en un bolsillo en la espalda de la remera de dormir.</li>
+<li><b>Tercera línea:</b> chaleco o cinturón posicional comercial.</li>
+<li><b>Complemento:</b> tacos de 10–15 cm bajo las patas de la cabecera. Nunca almohadas apiladas: flexionan el cuello y empeoran la obstrucción.</li>
+</ul>`},
+{t:'Barajado cognitivo · cuando la mente no para', h:`
+Técnica específica para mentes que no se apagan, particularmente útil en TDAH. Usala cuando llevás
+más de 15 minutos despierto en la cama.
+<ul>
+<li>Elegí una palabra neutra y larga, por ejemplo <b>CANASTA</b>.</li>
+<li>Tomá la primera letra, C. Imaginá unos segundos un objeto que empiece con C: casa. Visualizalo con detalle, sin armar una historia.</li>
+<li>Pasá a otro objeto con C: caballo. Después otro: cuchara. Cuando se agoten, pasá a la A.</li>
+<li>El mecanismo: imponer una secuencia <b>desconectada</b> de imágenes impide que el cerebro arme narrativas —preocupaciones, planificación, repaso del día— que son lo que sostiene la vigilia.</li>
+</ul>
+<b>Regla de los 20 minutos:</b> si pasan 20 minutos sin dormirte, levantate, andá a otro ambiente con
+luz tenue y volvé solo cuando tengas sueño. Quedarte despierto en la cama entrena al cerebro a
+asociar la cama con la vigilia.`},
+{t:'Gemelo · protocolo de tríceps sural', h:`
+Tennis leg tiene alta tasa de recidiva y el momento de mayor riesgo es este: cuando ya no duele.
+Subí de nivel solo si completaste el anterior una semana entera sin dolor.
+<ul>
+<li><b>Nivel 1 · sem 1–2:</b> elevación de talones bilateral con apoyo en la pared. Subida en 2 s, bajada en 3 s. 3 × 15, cinco días por semana.</li>
+<li><b>Nivel 2 · sem 3–4:</b> bilateral con rodilla flexionada (sóleo) y con rodilla extendida (gemelos). 3 × 15 de cada una, cuatro días.</li>
+<li><b>Nivel 3 · sem 5–6:</b> excéntrico — subir con dos piernas, bajar solo con la izquierda en 4 segundos. Es la fase que más previene recidiva. 3 × 12, cuatro días.</li>
+<li><b>Nivel 4 · sem 7–8:</b> unilateral completo desde borde de escalón, rango completo. 3 × 12 por pierna, tres días.</li>
+<li><b>Nivel 5 · desde sem 9:</b> unilateral con carga más saltos suaves progresivos. Mantenimiento permanente.</li>
+</ul>
+<b>Alarma:</b> dolor —no molestia— durante o después del tenis: se retrocede un nivel una semana.
+Dolor agudo repentino con sensación de "pedrada": consulta traumatológica.`},
+{t:'Tobillo · prevención de esguince', h:`
+Los esguinces a repetición reducen la propiocepción y son el principal predictor de esguinces
+futuros. Cinco minutos, tres veces por semana. Sirve también en la cancha.
+<ul>
+<li><b>Apoyo unipodal:</b> 3 × 30 s por pierna. Progresión: ojos abiertos → ojos cerrados → sobre la colchoneta.</li>
+<li><b>Eversión con banda:</b> 3 × 15 por pierna. Fortalece los peroneos, que son los que fallan en el esguince.</li>
+<li><b>Alfabeto con el pie:</b> dibujar el abecedario en el aire con el dedo gordo. Una vez por pie.</li>
+</ul>`},
+{t:'Sesión A · tren inferior', h:`
+<ul>
+<li>Sentadilla en máquina o goblet con pesa rusa · 4 × 10</li>
+<li>Peso muerto rumano · 4 × 10 · carga conservadora, el patrón antes que el peso</li>
+<li>Zancadas · 3 × 10 por pierna</li>
+<li>Extensiones y curl femoral · 3 × 12</li>
+<li>Protocolo de gemelo del nivel vigente</li>
+</ul>
+<b>Progresión:</b> cuando completás las series con buena técnica en dos sesiones seguidas, subís la
+carga entre 2,5 y 5%. Ni antes ni más.`},
+{t:'Sesión B · tren superior', h:`
+<ul>
+<li>Press de banca o máquina · 4 × 10</li>
+<li>Remo · 4 × 10 · escápula retraída, sin impulso lumbar</li>
+<li>Press militar · 3 × 10</li>
+<li>Dominadas asistidas · 3 × 8</li>
+<li>Bíceps y tríceps · 3 × 12</li>
+</ul>`},
+{t:'Sesión C · cuerpo completo y zona 2', h:`
+Circuito con pesas rusas en la terraza: swing, sentadilla goblet, press, remo. Cuatro vueltas.
+Después, 20–30 minutos de cardio en zona 2.
+<br><br><b>Zona 2</b> es la intensidad a la que podés mantener una conversación completa sin quedarte
+sin aire, aproximadamente 100–117 lpm para tu edad. Es el rango que más mejora la función
+mitocondrial y la salud cardiovascular con mínimo estrés articular. <b>Con tu perfil de riesgo vale
+más que cualquier trabajo de alta intensidad.</b> Como no te gusta correr: bicicleta, elíptico,
+caminata en pendiente o natación en Balbín y Olazábal.`},
+{t:'Planes B · cuando el día se rompe', h:`
+<ul>
+<li><b>Llueve y se cancela el tenis</b> → gimnasio en el horario del tenis, o circuito de pesas rusas en casa, 20 minutos.</li>
+<li><b>Llegás tarde y el gimnasio cerró</b> → circuito de 20 minutos en la terraza: swing, sentadilla goblet, plancha, elevaciones de talones. Cuatro vueltas.</li>
+<li><b>Energía muy baja</b> → <b>regla de los 10 minutos:</b> andá y entrená solo 10 minutos. Si seguís sin ganas, te vas sin culpa. En la práctica terminás la sesión casi siempre. Lo que se protege es la cadena de asistencia.</li>
+<li><b>Costa Esmeralda</b> → gimnasio local o pesas rusas, más una vuelta de golf caminando (8.000–12.000 pasos).</li>
+<li><b>Semana de cierre laboral</b> → una sola sesión. Sueño y pasos se sostienen sí o sí. No se abandona: se comprime.</li>
+<li><b>Imprevisto total</b> → caminata de 30 minutos. Es el piso absoluto del plan.</li>
+</ul>`},
+{t:'Alimentación · se agrega antes de sacar', h:`
+Ningún alimento está prohibido y ninguna caloría se cuenta. Se suma proteína, verdura, fruta y agua
+hasta desplazar lo que sobra. Es lo que protege a Emma <b>y</b> lo que mejor funciona en adultos.
+<ul>
+<li><b>Proteína en las cuatro comidas.</b> Una porción del tamaño de tu palma, con grosor. Falta sobre todo en la merienda.</li>
+<li><b>Verdura en almuerzo y cena.</b> La mitad del plato. Al horno junto con la carne del kamado: no requiere cocción aparte.</li>
+<li><b>Dos frutas diarias.</b> Enteras, no en jugo.</li>
+<li><b>Agua desplaza gaseosa.</b> 2,5 L por día. La Coca Zero baja por sustitución: 2 L → 1,5 → 1 → 0,5, de a dos semanas.</li>
+</ul>
+<b>La merienda es la comida crítica.</b> Café con medialunas a las 17:00 produce un pico y una caída
+que llegan justo a la noche, que es cuando más comés por ansiedad. Arreglarla es lo que más reduce
+la ingesta nocturna sin pedirte fuerza de voluntad a las 22:00.`},
+{t:'Batch cooking del domingo', h:`
+Tu obstáculo real: llegás a las 20:30 sin energía para cocinar y ahí aparece el delivery. La solución
+no es voluntad a esa hora, es tener la comida hecha.
+<ul>
+<li><b>10:00–11:00 · Compra.</b> Coto o iFresh con la lista fija. Ir con lista escrita elimina la decisión frente a la góndola.</li>
+<li><b>11:00–12:30 · Producción.</b> Kamado u horno a plena carga: 1,5 kg de carne o pollo en tandas, bandeja grande de verduras asadas, olla de arroz o legumbres, seis milanesas al horno. Todo en simultáneo.</li>
+<li><b>12:30–13:00 · Fraccionado.</b> Cinco viandas en herméticos y bases de cena. Verdura lavada y cortada a la vista en la heladera.</li>
+</ul>
+<b>Dos horas y media el domingo eliminan cinco decisiones de almuerzo y tres cenas de delivery.</b>
+Es la mejor relación esfuerzo/resultado de todo el componente nutricional.`},
+{t:'Señales de alarma · consultar sin demora', h:`
+<ul>
+<li><b>Dolor, hinchazón, calor o enrojecimiento en una pierna</b>, sobre todo la izquierda, o asimetría entre ambas. Con tu antecedente de TVP: guardia inmediata.</li>
+<li><b>Dolor de pecho, falta de aire súbita o dolor al respirar profundo.</b> Guardia inmediata.</li>
+<li>Palpitaciones sostenidas, mareo intenso o desmayo durante el ejercicio.</li>
+<li>Dolor agudo repentino en el gemelo con sensación de "pedrada".</li>
+<li>Presión arterial persistentemente por encima de 140/90 mmHg en tomas repetidas.</li>
+<li>Empeoramiento marcado del ánimo, del sueño o de la ansiedad. Contactá a tu psiquiatra.</li>
+<li>Cefalea intensa de inicio súbito, alteración del habla, de la visión o debilidad de un lado del cuerpo. Guardia inmediata.</li>
+</ul>`}
+];
+
+/* ============================ field definitions ============================ */
+const FIELDS = {
+  sueno:[
+    {k:'bed',  type:'time', t:'Hora de acostarse', h:'Objetivo progresivo: 23:45 → 23:00'},
+    {k:'wake', type:'time', t:'Hora de despertar', h:'07:00 fijo, incluidos sábado y domingo'},
+    {k:'hrs',  type:'num',  t:'Horas de sueño', h:'Del anillo o estimadas', step:'0.1'},
+    {k:'side', type:'chk',  t:'Empecé la noche de costado', h:'Derecho, con almohada corporal'},
+    {k:'wakeups', type:'num', t:'Despertares nocturnos', h:''},
+  ],
+  mov:[
+    {k:'steps', type:'num', t:'Pasos', h:'6.000 en Fase 0 → 10.000'},
+    {k:'train', type:'seg', t:'Entrenamiento', opts:[['','—'],['gym','Gimnasio'],['tenis','Tenis'],['cam','Caminata']]},
+    {k:'calf',  type:'chk', t:'Protocolo de gemelo', h:'No se saltea'},
+    {k:'ankle', type:'chk', t:'Protocolo de tobillo', h:'3 días por semana'},
+    {k:'breaks',type:'chk', t:'Pausas de pie cada 60 min', h:'Con antecedente de TVP no es opcional'},
+  ],
+  alim:[
+    {k:'veg',  type:'seg', t:'Verdura en las comidas', opts:[['0','0'],['1','1'],['2','2']], good:true},
+    {k:'fruit',type:'seg', t:'Frutas', opts:[['0','0'],['1','1'],['2','2'],['3','3+']], good:true},
+    {k:'water',type:'num', t:'Agua (litros)', h:'Objetivo 2,5 L', step:'0.1'},
+    {k:'coke', type:'num', t:'Coca Zero (mL)', h:'Fase 0: solo registrar', step:'50'},
+    {k:'coffee',type:'time',t:'Último café', h:'≤ 16:00 en Fase 0, luego ≤ 14:00'},
+    {k:'dinner',type:'time',t:'Fin de la cena', h:'3 h antes de acostarte'},
+    {k:'meds', type:'chk',  t:'Medicación completa', h:'Concerta y sertralina con el desayuno'},
+  ],
+  sen:[
+    {k:'energy',type:'seg', t:'Energía', opts:[['2','Baja'],['5','Media'],['8','Buena'],['10','Alta']]},
+    {k:'mood',  type:'seg', t:'Ánimo',   opts:[['2','Bajo'],['5','Medio'],['8','Bueno'],['10','Alto']]},
+    {k:'calfSym',type:'seg',t:'Gemelo', opts:[['0','Sin nada'],['1','Molestia'],['2','Dolor']], warn:'2'},
+  ],
+  sem:[
+    {k:'weight',type:'num', t:'Peso (kg)', h:'En ayunas, con Emma ausente. Nunca se comenta en casa', step:'0.1'},
+    {k:'waist', type:'num', t:'Cintura (cm)', h:'A nivel del ombligo, en espiración, sin comprimir', step:'0.5'},
+    {k:'neck',  type:'num', t:'Cuello (cm)', h:'Mensual. Su descenso predice mejora de la apnea', step:'0.5'},
+    {k:'bpS',   type:'num', t:'Presión sistólica', h:'Sentado, tras 5 min de reposo', step:'1'},
+    {k:'bpD',   type:'num', t:'Presión diastólica', h:'Objetivo < 130/80', step:'1'},
+    {k:'rhr',   type:'num', t:'FC de reposo', h:'Al despertar', step:'1'},
+  ]
+};
+const CORE = ['phone','side','calf','breaks','meds'];
+
+/* ============================ render ============================ */
+const $ = s => document.querySelector(s);
+const el = (t,c,h) => { const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e; };
+let saveTmr=null;
+function persist(){ clearTimeout(saveTmr); saveTmr=setTimeout(()=>{ kvSet('state',JSON.stringify(S)); },250); }
+
+function renderHeader(){
+  $('#hDate').textContent = fmtLong(cur);
+  const p = phaseOf(cur);
+  $('#hPhase').textContent = p ? p.short : 'Previo';
+  const t = todayISO();
+  $('#hEyebrow').textContent = cur===t ? 'Hoy' : (cur===shift(t,-1) ? 'Ayer' : 'Registro');
+  const dn = Math.round((parse(cur)-parse(START))/86400000);
+  $('#dRel').textContent = dn>=0 ? ('Día '+dn+' del plan') : 'Antes del inicio';
+  $('#dNext').style.opacity = cur>=t ? .3 : 1;
+  $('#secSemanal').classList.toggle('hide', dayOf(cur)!==0);
+}
+
+function renderKeystone(){
+  const d=D(cur), v=d.phone;
+  $('#ksY').className = v===1 ? 'sel-y' : '';
+  $('#ksN').className = v===0 ? 'sel-n' : '';
+  $('#keystone').classList.toggle('done', v===1);
+  $('#ksLabel').textContent = v===1 ? 'Hecho · la regla se cumplió' : 'La regla innegociable';
+
+  const rb=$('#ribbon'); rb.innerHTML='';
+  const NAMES=['D','L','M','X','J','V','S'];
+  for(let i=6;i>=0;i--){
+    const k=shift(cur,-i), val=S.days[k]?.phone;
+    const n=el('div','n'+(val===1?' y':val===0?' no':'')+(i===0?' today':''));
+    n.appendChild(el('b',null,NAMES[dayOf(k)]));
+    rb.appendChild(n);
+  }
+  let st=0, k=cur;
+  while(S.days[k]?.phone===1){ st++; k=shift(k,-1); }
+  let tot=0, cnt=0;
+  for(let i=0;i<14;i++){ const v2=S.days[shift(cur,-i)]?.phone; if(v2!==undefined){cnt++; if(v2===1)tot++;} }
+  $('#streak').innerHTML = st>0
+    ? `<b>${st}</b> noche${st>1?'s':''} seguida${st>1?'s':''} · <b>${tot}</b> de ${cnt||0} en las últimas dos semanas`
+    : (cnt ? `<b>${tot}</b> de ${cnt} en las últimas dos semanas` : 'Sin registro todavía');
+}
+
+function buildGroup(cid, defs){
+  const box=$(cid); box.innerHTML='';
+  const d=D(cur);
+  defs.forEach(f=>{
+    const row=el('div','row');
+    const lab=el('div','lab');
+    lab.appendChild(el('div','t',f.t));
+    if(f.h) lab.appendChild(el('div','h',f.h));
+    row.appendChild(lab);
+
+    if(f.type==='chk'){
+      const c=el('div','chk'+(d[f.k]?' on':''),'<svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg>');
+      c.setAttribute('role','checkbox'); c.tabIndex=0;
+      const tog=()=>{ d[f.k]=d[f.k]?0:1; c.classList.toggle('on',!!d[f.k]); persist(); };
+      c.onclick=tog; c.onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();tog();}};
+      row.appendChild(c);
+    } else if(f.type==='num' || f.type==='time'){
+      const w=el('div','num'); const i=document.createElement('input');
+      i.type = f.type==='time' ? 'time' : 'number';
+      if(f.step) i.step=f.step;
+      if(f.type==='num') i.inputMode='decimal';
+      i.value = d[f.k] ?? '';
+      i.oninput = () => { const v=i.value; if(v==='') delete d[f.k]; else d[f.k]= f.type==='time'? v : parseFloat(v); persist(); };
+      w.appendChild(i); row.appendChild(w);
+    } else if(f.type==='seg'){
+      const g=el('div','seg');
+      f.opts.forEach(([val,txt])=>{
+        const b=el('button',null,txt);
+        const on = String(d[f.k] ?? '') === val;
+        if(on){ b.classList.add('on'); if(f.warn===val) b.classList.add('warn'); if(f.good && val!=='0') b.classList.add('good'); }
+        b.onclick=()=>{ d[f.k]= (String(d[f.k]??'')===val) ? undefined : val;
+          if(d[f.k]===undefined) delete d[f.k]; persist(); buildGroup(cid,defs); };
+        g.appendChild(b);
+      });
+      row.appendChild(g);
+    }
+    box.appendChild(row);
+  });
+}
+
+function renderHoy(){
+  renderHeader(); renderKeystone();
+  buildGroup('#grpSueno',FIELDS.sueno);
+  buildGroup('#grpMov',FIELDS.mov);
+  buildGroup('#grpAlim',FIELDS.alim);
+  buildGroup('#grpSen',FIELDS.sen);
+  if(dayOf(cur)===0) buildGroup('#grpSem',FIELDS.sem);
+}
+
+/* ============================ charts ============================ */
+function series(key, n){
+  const out=[]; for(let i=n-1;i>=0;i--){ const k=shift(todayISO(),-i);
+    const v=S.days[k]?.[key]; out.push({k, v: (v===''||v==null)?null:parseFloat(v)}); }
+  return out;
+}
+function line(svgSel, sets, opts){
+  const svg=$(svgSel); svg.innerHTML='';
+  const W=320,H=145,pl=30,pr=6,pt=10,pb=18;
+  const all = sets.flatMap(s=>s.pts.filter(p=>p.v!=null).map(p=>p.v));
+  if(!all.length){ svg.innerHTML=`<text x="160" y="76" fill="#5D6579" font-size="11" text-anchor="middle" font-family="Inter">Sin datos todavía</text>`; return; }
+  let mn=Math.min(...all), mx=Math.max(...all);
+  if(opts&&opts.pad){ mn-=opts.pad; mx+=opts.pad; }
+  if(mx-mn<0.5){ mx+=0.5; mn-=0.5; }
+  const n = sets[0].pts.length;
+  const X=i=>pl+(i/(n-1||1))*(W-pl-pr);
+  const Y=v=>pt+(1-(v-mn)/(mx-mn))*(H-pt-pb);
+  let g='';
+  for(let i=0;i<=3;i++){ const v=mn+(mx-mn)*i/3, y=Y(v);
+    g+=`<line x1="${pl}" y1="${y.toFixed(1)}" x2="${W-pr}" y2="${y.toFixed(1)}" stroke="#2C3346" stroke-width=".6"/>`;
+    g+=`<text x="${pl-5}" y="${(y+3.5).toFixed(1)}" fill="#5D6579" font-size="8.5" text-anchor="end" font-family="JetBrains Mono">${v.toFixed(opts&&opts.dec!=null?opts.dec:1)}</text>`; }
+  sets.forEach(s=>{
+    if(s.bars){
+      const bw=Math.max(2,(W-pl-pr)/n-2.5);
+      s.pts.forEach((p,i)=>{ if(p.v==null) return;
+        const y=Y(p.v), h=Math.max(1.5,Y(mn)-y);
+        g+=`<rect x="${(X(i)-bw/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${s.c}" opacity="${s.o||.85}"/>`; });
+      return;
+    }
+    let d='',open=false;
+    s.pts.forEach((p,i)=>{ if(p.v==null){open=false;return;}
+      d += (open?'L':'M')+X(i).toFixed(1)+' '+Y(p.v).toFixed(1)+' '; open=true; });
+    if(d) g+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.w||2}" stroke-linecap="round" stroke-linejoin="round" ${s.dash?'stroke-dasharray="3 3"':''}/>`;
+    if(s.dots) s.pts.forEach((p,i)=>{ if(p.v!=null) g+=`<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="2.4" fill="${s.c}"/>`; });
+  });
+  if(opts&&opts.goal!=null && opts.goal>=mn && opts.goal<=mx){
+    g+=`<line x1="${pl}" y1="${Y(opts.goal).toFixed(1)}" x2="${W-pr}" y2="${Y(opts.goal).toFixed(1)}" stroke="#E0A458" stroke-width="1" stroke-dasharray="4 3" opacity=".8"/>`;
+  }
+  svg.innerHTML=g;
+}
+function movAvg(pts,win){
+  return pts.map((p,i)=>{ const s=Math.max(0,i-win+1); const w=pts.slice(s,i+1).filter(x=>x.v!=null);
+    return {k:p.k, v: w.length? w.reduce((a,b)=>a+b.v,0)/w.length : null}; });
+}
+function adherence(k){
+  const d=S.days[k]; if(!d) return null;
+  let done=0; CORE.forEach(f=>{ if(d[f]===1) done++; });
+  if(d.veg && +d.veg>=2) done+=0; // core only
+  return Math.round(done/CORE.length*100);
+}
+function renderProg(){
+  const w = series('weight',120).filter(p=>p.v!=null);
+  const sl = series('hrs',30);
+  const ph = series('phone',30);
+
+  const last = w.length?w[w.length-1].v:null;
+  const first = w.length?w[0].v:null;
+  const ma = w.length? movAvg(w,4) : [];
+  const maLast = ma.length? ma[ma.length-1].v : null;
+  const slV = sl.filter(p=>p.v!=null).slice(-7);
+  const slAvg = slV.length? slV.reduce((a,b)=>a+b.v,0)/slV.length : null;
+  const phV = ph.slice(-14).filter(p=>p.v!=null);
+  const phPct = phV.length? Math.round(phV.filter(p=>p.v===1).length/phV.length*100) : null;
+  const stp = series('steps',7).filter(p=>p.v!=null);
+  const stpAvg = stp.length? Math.round(stp.reduce((a,b)=>a+b.v,0)/stp.length) : null;
+
+  const cards=[
+    {k:'Sueño · 7 días', v: slAvg!=null? slAvg.toFixed(1)+' h':'—',
+     d: slAvg!=null ? (slAvg>=7?'En objetivo':'Objetivo 6,5–7,5 h'):'Sin datos',
+     c: slAvg!=null ? (slAvg>=6.5?'teal':'amber'):''},
+    {k:'Teléfono afuera', v: phPct!=null? phPct+'%':'—',
+     d:'Últimas dos semanas', c: phPct!=null?(phPct>=70?'teal':'rose'):''},
+    {k:'Media móvil peso', v: maLast!=null? maLast.toFixed(1)+' kg':'—',
+     d: (first!=null&&last!=null)? ((last-first>=0?'+':'')+(last-first).toFixed(1)+' kg desde el inicio'):'Registrá los domingos'},
+    {k:'Pasos · 7 días', v: stpAvg!=null? stpAvg.toLocaleString('es-AR'):'—',
+     d:'Objetivo 6.000 → 10.000', c: stpAvg!=null?(stpAvg>=8000?'teal':'amber'):''},
+  ];
+  $('#statGrid').innerHTML = cards.map(c=>
+    `<div class="stat"><div class="k">${c.k}</div><div class="v ${c.c||''}">${c.v}</div><div class="d">${c.d}</div></div>`).join('');
+
+  line('#chWeight',[
+    {pts:w, c:'#5D6579', w:1.4, dots:true},
+    {pts:ma, c:'#E0A458', w:2.4}
+  ],{pad:.6});
+  line('#chSleep',[{pts:sl, c:'#5FA294', bars:true}],{goal:7,dec:1});
+  line('#chWaist',[
+    {pts:series('waist',120).filter(p=>p.v!=null), c:'#E0A458', w:2, dots:true},
+    {pts:series('neck',120).filter(p=>p.v!=null), c:'#5FA294', w:1.6, dots:true, dash:true}
+  ],{pad:1});
+
+  const weeks=[]; let k=todayISO();
+  while(dayOf(k)!==0) k=shift(k,-1);
+  for(let i=7;i>=0;i--){ const st=shift(k,-7*i); let s=0,c=0;
+    for(let j=0;j<7;j++){ const a=adherence(shift(st,j)); if(a!=null){s+=a;c++;} }
+    weeks.push({k:st, v: c? Math.round(s/c):null}); }
+  line('#chAdh',[{pts:weeks, c:'#E0A458', bars:true, o:.9}],{goal:75,dec:0});
+}
+
+/* ============================ plan tab ============================ */
+function renderPlan(){
+  const t=todayISO();
+  $('#phaseList').innerHTML = PHASES.map(p=>{
+    const now = t>=p.a && t<=p.b;
+    return `<div class="phase${now?' now':''}">
+      <div class="ph"><h3>${p.n}</h3><span class="dt">${p.a.slice(8)}/${p.a.slice(5,7)} – ${p.b.slice(8)}/${p.b.slice(5,7)}</span></div>
+      <p>${p.d}</p><div class="crit">${p.c}</div></div>`;
+  }).join('');
+  const pl=$('#protoList'); pl.innerHTML='';
+  PROTOS.forEach((pr,i)=>{
+    const a=el('div','acc');
+    a.innerHTML=`<button type="button"><span>${pr.t}</span><span class="ar">›</span></button><div class="in hide">${pr.h}</div>`;
+    a.querySelector('button').onclick=()=>{ a.classList.toggle('open'); a.querySelector('.in').classList.toggle('hide'); };
+    pl.appendChild(a);
+  });
+}
+
+/* ============================ tabs ============================ */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    ['hoy','prog','plan','set'].forEach(t=>$('#tab-'+t).classList.toggle('hide', t!==b.dataset.tab));
+    if(b.dataset.tab==='prog') renderProg();
+    if(b.dataset.tab==='plan') renderPlan();
+    window.scrollTo(0,0);
+  };
+});
+$('#dPrev').onclick=()=>{ cur=shift(cur,-1); renderHoy(); };
+$('#dNext').onclick=()=>{ if(cur<todayISO()){ cur=shift(cur,1); renderHoy(); } };
+$('#ksY').onclick=()=>{ const d=D(cur); d.phone = d.phone===1?undefined:1; if(d.phone===undefined)delete d.phone; persist(); renderKeystone(); };
+$('#ksN').onclick=()=>{ const d=D(cur); d.phone = d.phone===0?undefined:0; if(d.phone===undefined)delete d.phone; persist(); renderKeystone(); };
+
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),2200); }
+
+/* ============================ security ============================ */
+const enc=new TextEncoder();
+async function hashPin(pin,salt){
+  const key=await crypto.subtle.importKey('raw',enc.encode(pin),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(salt),iterations:150000,hash:'SHA-256'},key,256);
+  return [...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+let pinBuf='', pinMode='check', pinFirst='';
+function drawPin(){ document.querySelectorAll('#pinDots i').forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length)); }
+(function buildPad(){
+  const p=$('#pad');
+  ['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(n=>{
+    const b=el('button',n===''?'blank':null,n);
+    if(n==='') { b.disabled=true; p.appendChild(b); return; }
+    b.onclick=()=>{
+      if(n==='⌫'){ pinBuf=pinBuf.slice(0,-1); drawPin(); return; }
+      if(pinBuf.length>=4) return;
+      pinBuf+=n; drawPin();
+      if(pinBuf.length===4) setTimeout(submitPin,120);
+    };
+    p.appendChild(b);
+  });
+})();
+async function submitPin(){
+  const pin=pinBuf; pinBuf=''; drawPin();
+  if(pinMode==='set1'){ pinFirst=pin; pinMode='set2'; $('#lockSub').textContent='Repetí el PIN'; return; }
+  if(pinMode==='set2'){
+    if(pin!==pinFirst){ pinMode='set1'; $('#lockSub').textContent='No coincide. Elegí un PIN de 4 dígitos'; $('#lockMsg').textContent='Probá de nuevo'; return; }
+    const salt=crypto.randomUUID();
+    S.sec.salt=salt; S.sec.hash=await hashPin(pin,salt);
+    await kvSet('state',JSON.stringify(S));
+    unlock(); return;
+  }
+  const h=await hashPin(pin,S.sec.salt);
+  if(h===S.sec.hash){ $('#lockMsg').textContent=''; unlock(); }
+  else { $('#lockMsg').textContent='PIN incorrecto'; }
+}
+function unlock(){ $('#lock').classList.add('hide'); $('#app').classList.remove('hide'); renderHoy(); }
+
+async function bioRegister(){
+  if(!window.PublicKeyCredential){ toast('Este dispositivo no soporta Face ID en web'); return; }
+  try{
+    const id=crypto.getRandomValues(new Uint8Array(16));
+    const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{name:'Protocolo'}, user:{id, name:'gabriel', displayName:'Gabriel'},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
+      timeout:60000, attestation:'none'}});
+    S.sec.credId=btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+    await kvSet('state',JSON.stringify(S));
+    toast('Face ID activado');
+    $('#bioBtn').classList.remove('hide');
+  }catch(e){ toast('No se pudo activar'); }
+}
+async function bioAuth(){
+  try{
+    const raw=Uint8Array.from(atob(S.sec.credId),c=>c.charCodeAt(0));
+    await navigator.credentials.get({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials:[{type:'public-key',id:raw}],
+      userVerification:'required', timeout:60000}});
+    unlock();
+  }catch(e){ $('#lockMsg').textContent='No se pudo verificar. Usá el PIN'; }
+}
+$('#bioBtn').onclick=bioAuth;
+$('#btnBio').onclick=bioRegister;
+$('#btnPin').onclick=()=>{ pinMode='set1'; pinBuf=''; pinFirst=''; drawPin();
+  $('#lockSub').textContent='Elegí un PIN de 4 dígitos'; $('#lockMsg').textContent='';
+  $('#bioBtn').classList.add('hide'); $('#app').classList.add('hide'); $('#lock').classList.remove('hide'); };
+
+/* ============================ Google Drive ============================ */
+let token=null, tokenClient=null;
+const FILE='protocolo.json';
+function setSync(cls,txt){ $('#syncDot').className='dot '+cls; $('#syncTxt').textContent=txt; }
+function initGIS(){
+  const cid=(S.cfg.clientId||'').trim();
+  if(!cid){ setSync('','Falta el Client ID'); return false; }
+  if(!window.google?.accounts?.oauth2){ setSync('err','Google no cargó. Revisá la conexión'); return false; }
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:cid, scope:'https://www.googleapis.com/auth/drive.appdata',
+    callback:r=>{ if(r.access_token){ token=r.access_token; setSync('ok','Conectado a Drive'); toast('Drive conectado'); }
+                  else setSync('err','No se pudo autorizar'); }});
+  return true;
+}
+$('#btnConnect').onclick=async()=>{
+  S.cfg.clientId=$('#cidInput').value.trim(); await kvSet('state',JSON.stringify(S));
+  if(initGIS()){ setSync('busy','Autorizando…'); tokenClient.requestAccessToken({prompt:''}); }
+};
+async function findFile(){
+  const r=await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)',
+    {headers:{Authorization:'Bearer '+token}});
+  const j=await r.json();
+  return (j.files||[]).find(f=>f.name===FILE)?.id||null;
+}
+async function push(){
+  if(!token){ toast('Conectá Drive primero'); return; }
+  setSync('busy','Guardando…');
+  try{
+    const id=await findFile();
+    const meta={name:FILE, ...(id?{}:{parents:['appDataFolder']})};
+    const body=new FormData();
+    body.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+    body.append('file',new Blob([JSON.stringify({days:S.days,cfg:{clientId:S.cfg.clientId},savedAt:new Date().toISOString()})],{type:'application/json'}));
+    const url='https://www.googleapis.com/upload/drive/v3/files'+(id?'/'+id+'?uploadType=multipart':'?uploadType=multipart');
+    const r=await fetch(url,{method:id?'PATCH':'POST',headers:{Authorization:'Bearer '+token},body});
+    if(!r.ok) throw 0;
+    setSync('ok','Guardado en Drive'); toast('Guardado en Drive');
+  }catch(e){ setSync('err','No se pudo guardar'); toast('No se pudo guardar'); }
+}
+async function pull(){
+  if(!token){ toast('Conectá Drive primero'); return; }
+  setSync('busy','Trayendo…');
+  try{
+    const id=await findFile();
+    if(!id){ setSync('ok','Todavía no hay respaldo'); toast('No hay respaldo en Drive'); return; }
+    const r=await fetch('https://www.googleapis.com/drive/v3/files/'+id+'?alt=media',{headers:{Authorization:'Bearer '+token}});
+    const j=await r.json();
+    S.days=Object.assign({},j.days||{},S.days);
+    await kvSet('state',JSON.stringify(S));
+    renderHoy(); setSync('ok','Datos actualizados'); toast('Datos traídos de Drive');
+  }catch(e){ setSync('err','No se pudo traer'); toast('No se pudo traer'); }
+}
+$('#btnPush').onclick=push; $('#btnPull').onclick=pull;
+
+/* ============================ backup ============================ */
+$('#btnExport').onclick=()=>{
+  const b=new Blob([JSON.stringify({days:S.days},null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download='protocolo-'+todayISO()+'.json'; a.click();
+};
+$('#btnImport').onclick=()=>$('#fileIn').click();
+$('#fileIn').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=async()=>{ try{ const j=JSON.parse(rd.result);
+    S.days=Object.assign({},S.days,j.days||{}); await kvSet('state',JSON.stringify(S));
+    renderHoy(); toast('Respaldo importado'); }catch(err){ toast('Archivo no válido'); } };
+  rd.readAsText(f);
+};
+$('#btnWipe').onclick=async()=>{
+  if(!confirm('Se borran todos los registros de este dispositivo. El respaldo en Drive no se toca. ¿Seguir?')) return;
+  S.days={}; await kvSet('state',JSON.stringify(S)); renderHoy(); toast('Datos borrados');
+};
+
+/* ============================ boot ============================ */
+(async function boot(){
+  db=await openDB();
+  const raw=await kvGet('state');
+  if(raw){ try{ S=Object.assign({days:{},cfg:{},sec:{}},JSON.parse(raw)); }catch(e){} }
+  $('#cidInput').value=S.cfg.clientId||'';
+  if(S.cfg.clientId) setSync('','Client ID cargado · sin conectar');
+
+  if(!S.sec.hash){ pinMode='set1'; $('#lockSub').textContent='Elegí un PIN de 4 dígitos'; }
+  else { pinMode='check';
+    if(S.sec.credId){ $('#bioBtn').classList.remove('hide'); setTimeout(bioAuth,350); } }
+})();
+</script>
+</body>
+</html>
