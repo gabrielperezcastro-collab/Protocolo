@@ -879,12 +879,18 @@ function initGIS(){
   tokenClient=google.accounts.oauth2.initTokenClient({
     client_id:cid, scope:'https://www.googleapis.com/auth/drive.appdata',
     callback:r=>{ if(r.access_token){ token=r.access_token; setSync('ok','Conectado a Drive'); toast('Drive conectado'); }
-                  else setSync('err','No se pudo autorizar'); }});
+                  else setSync('err','No se pudo autorizar'); },
+    error_callback:e=>{
+      const m = e && e.type==='popup_closed' ? 'Cerraste la ventana de Google'
+              : e && e.type==='popup_failed_to_open' ? 'Safari bloqueó la ventana emergente'
+              : 'No se pudo autorizar';
+      setSync('err',m); toast(m); }});
   return true;
 }
 $('#btnConnect').onclick=async()=>{
   S.cfg.clientId=$('#cidInput').value.trim(); await kvSet('state',JSON.stringify(S));
-  if(initGIS()){ setSync('busy','Autorizando…'); tokenClient.requestAccessToken({prompt:''}); }
+  if(initGIS()){ setSync('busy','Elegí tu cuenta de Google…');
+    tokenClient.requestAccessToken({prompt:'select_account'}); }
 };
 async function findFile(){
   const r=await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)',
